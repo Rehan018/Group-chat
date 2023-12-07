@@ -1,0 +1,39 @@
+#message-box {
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 10px 20px;
+  }
+
+  input.form-control {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+
+  .send-box {
+    position: fixed !important;
+    bottom: 2%;
+    width: 60%; /* Adjusted width */
+    right: 20%; /* Adjusted right position */
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  #friend-name {
+    margin-top: 20px;
+    font-size: 20px;
+    color: #333;
+  }
+
+  body {
+    background-color: #f9f9f9;
+  }
