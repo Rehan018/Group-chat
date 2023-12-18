@@ -2,7 +2,7 @@ const { Sequelize } = require("sequelize");
 
 // Adding Details of Sequelize
 
-const DB_NAME ='GropChat';
+const DB_NAME ='gropChat';
 const DB_UN = 'root';
 const DB_P = '';
 const DB_H = 'localhost';
@@ -19,6 +19,7 @@ const models = [
   require("../models/group"),
   require("../models/groupMessage"),
   require("../models/groupUser"),
+  require("../models/forgotpassword"),
 ];
 
 for (const model of models) {
@@ -31,6 +32,7 @@ const Message = sequelize.models.message;
 const Group = sequelize.models.group;
 const groupMessage = sequelize.models.groupMessage;
 const groupUser = sequelize.models.groupUser;
+// const forgotpasswords=sequelize.models.forgotpasswords;
 
 // Relationships
 User.hasMany(Message, {

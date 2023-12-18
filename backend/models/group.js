@@ -12,7 +12,6 @@ const Group = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-
     creator: {
       type: DataTypes.INTEGER,
     },

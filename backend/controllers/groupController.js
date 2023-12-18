@@ -1,42 +1,62 @@
-const bcrypt = require("bcrypt");
-const sequelize = require("../utils/database");
-const jwt = require("jsonwebtoken");
-const { Op } = require("sequelize");
-const SECRET_KEY = process.env.SECRET_KEY;
+//Dependencies:
+const bcrypt = require("bcrypt"); // Library for password hashing
+const sequelize = require("../utils/database"); // Sequelize instance for database interaction
+const jwt = require("jsonwebtoken"); // JSON Web Token library for authentication
+const { Op } = require("sequelize"); // Sequelize operators for queries
+const SECRET_KEY = process.env.SECRET_KEY; // Secret key for JWT, retrieved from environment variables
 
 // Models
-const Group = sequelize.models.group;
-const GroupUser = sequelize.models.groupUser;
-const User = sequelize.models.user;
-const GroupMessage = sequelize.models.groupMessage;
+const Group = sequelize.models.group; // Sequelize model for Group
+const GroupUser = sequelize.models.groupUser; // Sequelize model for GroupUser
+const User = sequelize.models.user; // Sequelize model for User
+const GroupMessage = sequelize.models.groupMessage; // Sequelize model for GroupMessage
 
+// Function to add a group
+
+/*The addGroup function is used to create a new group. It takes input from the request body,
+ including the group name and a list of user IDs to be added to the group. 
+ The function verifies the user's JWT token, retrieves the admin user ID,
+creates a new group in the database, adds users to the group, and responds 
+with the list of users in the group*/
 exports.addGroup = (req, res, next) => {
+  /*let body = req.body; is used to extract the request body from an incoming HTTP 
+  request. In a typical Express.js application, req.body contains the data submitted 
+  in the request body, commonly used in POST or PUT requests where data is sent from
+   a client to the server.*/
   let body = req.body;
+
   let token = req.headers.token;
   if (body !== undefined && token !== undefined) {
     jwt.verify(token, SECRET_KEY, async function (err, decryptToken) {
+      // Retrieve admin user ID from the decoded token
       let admin = decryptToken.userId;
       let users = body.users;
       let groupName = body.name;
 
       // First Create Group
       try {
+        // Create a new group in the database
         let group = await Group.create({
           name: groupName,
           creator: admin,
         });
 
         try {
+          // Add users to the group
           users.push(Number(admin));
           for (const user of users) {
+            // Check if the user is an admin
             let isAdmin = decryptToken.userId === user ? true : false;
+            // Create GroupUser association
             await GroupUser.create({
+              /*This line creates an association between a group and a user in a database table, */
               groupId: group.id,
               userId: user,
               admin: isAdmin,
             });
           }
 
+          // Retrieve the list of users in the group
           let groupList = await GroupUser.findAll({
             where: { groupId: group.id },
           });
@@ -49,6 +69,7 @@ exports.addGroup = (req, res, next) => {
       }
     });
   } else {
+    // Handle cases where request body or token is missing
     if (body === undefined) {
       res
         .status(205)
@@ -61,25 +82,13 @@ exports.addGroup = (req, res, next) => {
   }
 };
 
-// (req, res, next) => {
-//     let body = req.body;
-//     let token = req.headers.token;
-//     if (body !== undefined && token !== undefined) {
-//    jwt.verify(token, SECRET_KEY, async function (err, decryptToken) {});
-//     } else {
-//       if (body === undefined) {
-//         res
-//           .status(205)
-//           .json({ status: "error", message: "Client needs to resend data" });
-//       } else {
-//         res
-//           .status(205)
-//           .json({ status: "error", message: "User not logged in yet" });
-//       }
-//     }
-//   };
+// Function to get information about groups associated with a particular user
 
-// This is return all group associated with particular user.
+/*The getUserGroupInformation function retrieves information about groups 
+associated with a particular user. It verifies the user's JWT token, 
+retrieves the user ID, queries the database for groups associated with 
+the user, and responds with detailed information about each group, 
+including admin status*/
 exports.getUserGroupInformation = (req, res, next) => {
   let body = req.body;
   let token = req.headers.token;
@@ -91,6 +100,7 @@ exports.getUserGroupInformation = (req, res, next) => {
       let user = decryptToken.userId;
 
       try {
+        // Retrieve all groups associated with the user, including associated data
         let group = await GroupUser.findAll({
           include: {
             all: true,
@@ -100,12 +110,15 @@ exports.getUserGroupInformation = (req, res, next) => {
           },
         });
 
+        // Process the retrieved data and prepare a response
         let responseGroup = [];
         for (const data of group) {
           let id = data.dataValues.groupId;
 
+          // Retrieve information about a specific group
           let group = await Group.findOne({ where: { id: id } });
 
+          // Create an object with group information and admin status
           let obj = {};
           obj["group"] = group;
           obj["isAdmin"] = data.admin;
@@ -121,6 +134,7 @@ exports.getUserGroupInformation = (req, res, next) => {
       }
     });
   } else {
+    // Handle cases where request body or token is missing
     if (body === undefined) {
       res
         .status(205)
@@ -133,7 +147,7 @@ exports.getUserGroupInformation = (req, res, next) => {
   }
 };
 
-// This is return specific group information and it's users.
+// Function to get specific group information and its users
 exports.getSingleGroupInformation = (req, res, next) => {
   let body = req.body;
   let token = req.headers.token;
@@ -145,12 +159,14 @@ exports.getSingleGroupInformation = (req, res, next) => {
       }
 
       try {
+        // Retrieve all users in a specific group
         let groupUsers = await GroupUser.findAll({
           where: {
             groupId: groupId,
           },
         });
 
+        // Retrieve information about the specific group
         let group = await Group.findOne({ where: { id: groupId } });
 
         res.status(200).json({
@@ -163,6 +179,7 @@ exports.getSingleGroupInformation = (req, res, next) => {
       }
     });
   } else {
+    // Handle cases where request body or token is missing
     if (body === undefined) {
       res
         .status(205)
@@ -175,6 +192,11 @@ exports.getSingleGroupInformation = (req, res, next) => {
   }
 };
 
+/*The storeMessage function is responsible for storing group messages.
+ It verifies the user's JWT token, retrieves the group ID, user ID, 
+ and message from the request body, creates a new group message 
+ in the database, and responds with a 201 status and the ID of 
+ the stored message.*/
 exports.storeMessage = (req, res, next) => {
   let body = req.body;
   let token = req.headers.token;
@@ -189,6 +211,7 @@ exports.storeMessage = (req, res, next) => {
       let message = body.message;
 
       try {
+        // Create a new group message in the database
         let messageObj = await GroupMessage.create({
           groupId: groupId,
           message: message,
@@ -215,6 +238,10 @@ exports.storeMessage = (req, res, next) => {
   }
 };
 
+/*The getAllMessages function retrieves all messages for a specific group, 
+excluding messages with IDs less than a specified skip value. 
+It verifies the user's JWT token, retrieves the group ID from 
+the query parameters, and responds with the messages and the user's ID*/
 exports.getAllMessages = (req, res, next) => {
   let token = req.headers.token;
   let group = req.query.id;
@@ -256,6 +283,10 @@ exports.getAllMessages = (req, res, next) => {
   }
 };
 
+/*groupFriends function retrieves information about friends and
+ non-friends associated with a specific group. It verifies 
+ the user's JWT token, retrieves the group ID from the query
+  parameters, and responds with a list of friends and non-friends in the group*/
 exports.groupFriends = (req, res, next) => {
   id = req.query.id;
   token = req.headers.token;
@@ -338,6 +369,9 @@ exports.groupFriends = (req, res, next) => {
   }
 };
 
+/*removeGroupUser function removes a user from a group. It verifies the user's JWT token, 
+retrieves the group and user IDs from the request body, and deletes the corresponding 
+GroupUser association from the database*/
 exports.removeGroupUser = (req, res, next) => {
   token = req.headers.token;
   body = req.body;
@@ -411,6 +445,10 @@ exports.addGroupUser = (req, res, next) => {
   }
 };
 
+/*adminModify function modifies the admin status of a user within a group.
+ It verifies the user's JWT token, retrieves the group and user IDs 
+ from the request body, finds the corresponding GroupUser record, 
+ toggles the admin status, and saves the changes*/
 exports.adminModify = (req, res, next) => {
   token = req.headers.token;
   body = req.body;

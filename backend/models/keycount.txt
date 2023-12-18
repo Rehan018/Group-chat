@@ -1,0 +1,17 @@
+1. Primary Keys:
+   - `id` is used as the primary key in several models: `ForgotPasswords`, `Friend`, `Group`, `GroupMessage`, `GroupUser`, `Message`, and `User`.
+   - Count: 7
+
+2. Foreign Keys:
+   - `toUser` is used as a foreign key in the `Friend`, `GroupMessage`, and `Message` models.
+   - `creator` is used as a foreign key in the `Group` model.
+   - Count: 4
+
+3. Other Fields:
+   - `isactive`, `createdAt`, and `updatedAt` in the `ForgotPasswords` model.
+   - `name` and `admin` in the `Group` and `GroupUser` models.
+   - `message` in the `GroupMessage` and `Message` models.
+   - `phone` and `password` in the `User` model.
+   - Count: 8
+
+Total keys: 7 (Primary Keys) + 4 (Foreign Keys) + 8 (Other Fields) = 19 keys

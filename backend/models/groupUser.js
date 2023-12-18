@@ -8,7 +8,6 @@ const GroupUser = (sequelize) => {
       primaryKey: true,
       autoIncrement: true,
     },
-
     admin: {
       type: DataTypes.BOOLEAN,
       default: 0,
